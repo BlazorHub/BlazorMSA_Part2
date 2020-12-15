@@ -26,6 +26,24 @@ namespace BlazorClient1 {
         // load the roles inside the claim array "role" ("role": ["Admin", "User, ...]) 
       .AddAccountClaimsPrincipalFactory<CustomUserFactory>();
 
+      builder.Services.AddAuthorizationCore(options =>
+      {
+        options.AddPolicy("WebApi_List", policy => policy.RequireClaim("WebApi1.List", "true"));
+        options.AddPolicy("WebApi_Update", policy => policy.RequireClaim("WebApi1.Update", "true"));
+        options.AddPolicy("WebApi_Delete", policy => policy.RequireClaim("WebApi1.Delete", "true"));
+        options.AddPolicy("ComplexPolicy", policy => policy
+            .RequireClaim("WebApi1.Delete", "true")
+            .RequireClaim("WebApi1.Update", "true")
+            .RequireRole("BlazorClient1_Admin", "BlazorClient1_User")
+        );
+        options.AddPolicy("MoreComplexPolicy", policy => policy
+          .RequireAssertion(context => 
+               context.User.HasClaim(claim => claim.Type == "WebApi1.Delete" || claim.Type == "WebApi1.Delete") ||
+               context.User.IsInRole("BlazorClient1_Admin")
+          )
+        ); 
+      });
+
       await builder.Build().RunAsync();
     }
   }
